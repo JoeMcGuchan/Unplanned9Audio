@@ -102,6 +102,8 @@ def stop_song():
 for key, files in KEY_BINDINGS.items():
     keyboard.add_hotkey(key, play_random_song, args=(files, key))
 
+keyboard.add_hotkey(STOP_KEY, stop_song)
+
 print("Music hotkeys:")
 for key, binding in KEY_BINDINGS.items():
     mode = "loop" if binding["loop"] else "one-shot"
