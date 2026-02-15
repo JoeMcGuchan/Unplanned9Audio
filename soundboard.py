@@ -13,24 +13,75 @@ SUPPORTED_EXTENSIONS = (".mp3", ".wav", ".ogg", ".flac")
 # tracks are stored as (track, volume)
 KEY_BINDINGS = {
     "1": {
-        "loop": True,
+        "loop": False,
+        "name": "Set Open",
         "tracks": [
-            (r"Music\1\bbc_common-fro_nhu0510423.mp3", 0.8, 1500),
-            (r"Music\1\bbc_peregrine-_nhu0510423.mp3", 0.6, 3000),
+            (r"Music\Set Open\Trouble-on-Mercury_Looping.mp3", 1, 1000),
         ],
     },
     "2": {
-        "loop": False,
+        "loop": True,
+        "name": "Droning",
         "tracks": [
-            (r"Music\2\bbc_hooded-cro_nhu0510419.mp3", 0.7, 0),
-            (r"Music\2\bbc_reindeer--_nhu0510415.mp3", 0.5, 2000),
+            (r"Music\Droning\Titan-Poweplant.mp3", 1, 1000),
         ],
     },
     "3": {
         "loop": True,
+        "name": "Industrial Ambience",
         "tracks": [
-            (r"Music\3\bbc_scottish-c_nhu0510409.mp3", 0.9, 1000),
-            (r"Music\3\bbc_tawny-owl-_nhu0510408.mp3", 0.65, 4000),
+            (r"Music\Industrial Ambience\Factory-On-Mercury_Looping.mp3", 1, 1000),
+            (r"Music\Industrial Ambience\Security-Breach_Looping.mp3", 1, 1000),
+        ],
+    },
+    "4": {
+        "loop": True,
+        "name": "Peaceful",
+        "tracks": [
+            (r"Music\Peaceful\Digital-Dew-Drops_v001.mp3", 1, 1000),
+        ],
+    },
+    "5": {
+        "loop": True,
+        "name": "Radio Tuning",
+        "tracks": [
+            (r"Music\Radio Tuning\Rolling-Radio-Dial_LoFi.mp3", 1, 1000),
+        ],
+    },
+    "6": {
+        "loop": True,
+        "name": "Action",
+        "tracks": [
+            (r"Music\Action\Sector-Off-Limits_Looping.mp3", 1, 1000),
+            (r"Music\Action\Steamtech-Mayhem_Looping.mp3", 1, 1000),
+            (r"Music\Action\World-of-Automatons_Looping_v001.mp3", 1, 1000),
+        ],
+    },
+    "7": {
+        "loop": True,
+        "name": "Space Ambience",
+        "tracks": [
+            (r"Music\Space Ambience\Blazing-Stars_Looping.mp3", 0.7, 1000),
+            (r"Music\Space Ambience\Retro-Sci-Fi-Planet_Looping.mp3", 1, 1000),
+        ],
+    },
+    "8": {
+        "loop": True,
+        "name": "Suspense",
+        "tracks": [
+            (r"Music\Suspense\Cold-Moon_Looping.mp3", 1, 1000),
+            (r"Music\Suspense\Creature-from-the-Dark-Lagoon_Looping.mp3", 1, 1000),
+            (r"Music\Suspense\Dizzybot_Looping_Remixed.mp3", 1, 1000),
+            (r"Music\Suspense\Eerie-Cyber-World_Looping.mp3", 0.7, 1000),
+        ],
+    },
+    "9": {
+        "loop": True,
+        "name": "Techno Ambience",
+        "tracks": [
+            (r"Music\Techno Ambience\Dark-Techno-City_Looping.mp3", 1, 1000),
+            (r"Music\Techno Ambience\Night-Winds_Looping.mp3", 1, 1000),
+            (r"Music\Techno Ambience\Urban-Jungle-2061_Looping.mp3", 1, 1000),
         ],
     },
 }
@@ -106,8 +157,7 @@ keyboard.add_hotkey(STOP_KEY, stop_song)
 
 print("Music hotkeys:")
 for key, binding in KEY_BINDINGS.items():
-    mode = "loop" if binding["loop"] else "one-shot"
-    print(f"  {key} → {len(binding['tracks'])} tracks ({mode})")
+    print(f"  {key} → {binding["name"]}")
 
 print(f"\n{STOP_KEY} → stop song")
 print(f"{QUIT_KEY} → quit")
