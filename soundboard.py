@@ -12,6 +12,13 @@ SUPPORTED_EXTENSIONS = (".mp3", ".wav", ".ogg", ".flac")
 # loop: whether or not the music should loop on finishing
 # tracks are stored as (track, volume)
 KEY_BINDINGS = {
+    "*": {
+        "loop": True,
+        "name": "Radio Tuning",
+        "tracks": [
+            (r"Music\Radio Tuning\Rolling-Radio-Dial_LoFi.mp3", 1, 1000),
+        ],
+    },
     "1": {
         "loop": False,
         "name": "Set Open",
@@ -21,9 +28,11 @@ KEY_BINDINGS = {
     },
     "2": {
         "loop": True,
-        "name": "Droning",
+        "name": "Orchestral",
         "tracks": [
-            (r"Music\Droning\Titan-Poweplant.mp3", 1, 1000),
+            (r"Music\Orchestral\711018__muyo5438__atmosphere-music-for-nature-movies.mp3", 1, 1000),
+            (r"Music\Orchestral\789277__matio888__cinematic-strings-and-piano.mp3", 1, 1000),
+            (r"Music\Orchestral\824902__feres12__emotional_strings.mp3", 1, 1000),
         ],
     },
     "3": {
@@ -32,6 +41,7 @@ KEY_BINDINGS = {
         "tracks": [
             (r"Music\Industrial Ambience\Factory-On-Mercury_Looping.mp3", 1, 1000),
             (r"Music\Industrial Ambience\Security-Breach_Looping.mp3", 1, 1000),
+            (r"Music\Industrial Ambience\788422__nielsvdb__nightsky-drone.wav", 1, 1000),
         ],
     },
     "4": {
@@ -43,9 +53,10 @@ KEY_BINDINGS = {
     },
     "5": {
         "loop": True,
-        "name": "Radio Tuning",
+        "name": "Choral",
         "tracks": [
-            (r"Music\Radio Tuning\Rolling-Radio-Dial_LoFi.mp3", 1, 1000),
+            (r"Music\Choral\811110__sondredrakensson__touchstone-vocals-only.wav", 1, 1000),
+            (r"Music\Choral\830549__sondredrakensson__verdandi-choral-mix.wav", 1, 1000),
         ],
     },
     "6": {
@@ -63,6 +74,7 @@ KEY_BINDINGS = {
         "tracks": [
             (r"Music\Space Ambience\Blazing-Stars_Looping.mp3", 0.7, 1000),
             (r"Music\Space Ambience\Retro-Sci-Fi-Planet_Looping.mp3", 1, 1000),
+            (r"Music\Space Ambience\786225__freewheeel__post-apo-music.wav", 1, 1000),
         ],
     },
     "8": {
