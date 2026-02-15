@@ -91,6 +91,9 @@ LAST_SONG = {key: None for key in KEY_BINDINGS}
 STOP_KEY = "0"
 QUIT_KEY = "esc"
 
+CURRENT_VOLUME = 1.0   # default volume (0.0 - 1.0)
+VOLUME_STEP = 0.1      # how much + / - changes volume
+
 # ------------------------ #
 
 def play_random_song(binding, key_id):
@@ -125,7 +128,9 @@ def play_random_song(binding, key_id):
 
     try:
         pygame.mixer.music.load(song_path)
-        pygame.mixer.music.set_volume(volume)
+        global CURRENT_VOLUME
+        CURRENT_VOLUME = volume
+        pygame.mixer.music.set_volume(CURRENT_VOLUME)
 
         # loop forever if loop=True, otherwise play once
         loops = -1 if loop else 0
@@ -149,11 +154,29 @@ def stop_song():
     else:
         print("No song is currently playing")
 
+def change_volume(delta):
+    global CURRENT_VOLUME
+
+    if not pygame.mixer.music.get_busy():
+        print("No song playing")
+        return
+
+    CURRENT_VOLUME += delta
+
+    # Clamp between 0.0 and 1.0
+    CURRENT_VOLUME = max(0.0, min(1.0, CURRENT_VOLUME))
+
+    pygame.mixer.music.set_volume(CURRENT_VOLUME)
+
+    print(f"🔊 Volume set to {round(CURRENT_VOLUME, 2)}")
+
 # Bind keys dynamically
 for key, files in KEY_BINDINGS.items():
     keyboard.add_hotkey(key, play_random_song, args=(files, key))
 
 keyboard.add_hotkey(STOP_KEY, stop_song)
+keyboard.add_hotkey("+", change_volume, args=(VOLUME_STEP,))
+keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,))
 
 print("Music hotkeys:")
 for key, binding in KEY_BINDINGS.items():
