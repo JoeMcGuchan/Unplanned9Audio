@@ -2,100 +2,30 @@ import random
 import pygame
 import keyboard
 import os
+import configparser
 
 pygame.mixer.init()
 
 SUPPORTED_EXTENSIONS = (".mp3", ".wav", ".ogg", ".flac")
 
+DEFAULT_VOLUME = 1.0
+DEFAULT_FADE_MS = 1000
+
 # -------- CONFIG -------- #
 
 # loop: whether or not the music should loop on finishing
-# tracks are stored as (track, volume)
+# directory: path to the folder containing tracks for this key
 KEY_BINDINGS = {
-    "*": {
-        "loop": True,
-        "name": "Radio Tuning",
-        "tracks": [
-            (r"Music\Radio Tuning\Rolling-Radio-Dial_LoFi.mp3", 1, 1000),
-        ],
-    },
-    "1": {
-        "loop": False,
-        "name": "Set Open",
-        "tracks": [
-            (r"Music\Set Open\Trouble-on-Mercury_Looping.mp3", 1, 1000),
-        ],
-    },
-    "2": {
-        "loop": True,
-        "name": "Orchestral",
-        "tracks": [
-            (r"Music\Orchestral\711018__muyo5438__atmosphere-music-for-nature-movies.mp3", 1, 1000),
-            (r"Music\Orchestral\789277__matio888__cinematic-strings-and-piano.mp3", 1, 1000),
-            (r"Music\Orchestral\824902__feres12__emotional_strings.mp3", 1, 1000),
-        ],
-    },
-    "3": {
-        "loop": True,
-        "name": "Industrial Ambience",
-        "tracks": [
-            (r"Music\Industrial Ambience\Factory-On-Mercury_Looping.mp3", 1, 1000),
-            (r"Music\Industrial Ambience\Security-Breach_Looping.mp3", 1, 1000),
-            (r"Music\Industrial Ambience\788422__nielsvdb__nightsky-drone.wav", 1, 1000),
-        ],
-    },
-    "4": {
-        "loop": True,
-        "name": "Peaceful",
-        "tracks": [
-            (r"Music\Peaceful\Digital-Dew-Drops_v001.mp3", 1, 1000),
-        ],
-    },
-    "5": {
-        "loop": True,
-        "name": "Choral",
-        "tracks": [
-            (r"Music\Choral\811110__sondredrakensson__touchstone-vocals-only.wav", 1, 1000),
-            (r"Music\Choral\830549__sondredrakensson__verdandi-choral-mix.wav", 1, 1000),
-        ],
-    },
-    "6": {
-        "loop": True,
-        "name": "Action",
-        "tracks": [
-            (r"Music\Action\Sector-Off-Limits_Looping.mp3", 1, 1000),
-            (r"Music\Action\Steamtech-Mayhem_Looping.mp3", 1, 1000),
-            (r"Music\Action\World-of-Automatons_Looping_v001.mp3", 1, 1000),
-        ],
-    },
-    "7": {
-        "loop": True,
-        "name": "Space Ambience",
-        "tracks": [
-            (r"Music\Space Ambience\Blazing-Stars_Looping.mp3", 0.7, 1000),
-            (r"Music\Space Ambience\Retro-Sci-Fi-Planet_Looping.mp3", 1, 1000),
-            (r"Music\Space Ambience\786225__freewheeel__post-apo-music.wav", 1, 1000),
-        ],
-    },
-    "8": {
-        "loop": True,
-        "name": "Suspense",
-        "tracks": [
-            (r"Music\Suspense\Cold-Moon_Looping.mp3", 1, 1000),
-            (r"Music\Suspense\Creature-from-the-Dark-Lagoon_Looping.mp3", 1, 1000),
-            (r"Music\Suspense\Dizzybot_Looping_Remixed.mp3", 1, 1000),
-            (r"Music\Suspense\Eerie-Cyber-World_Looping.mp3", 0.7, 1000),
-        ],
-    },
-    "9": {
-        "loop": True,
-        "name": "Techno Ambience",
-        "tracks": [
-            (r"Music\Techno Ambience\Dark-Techno-City_Looping.mp3", 1, 1000),
-            (r"Music\Techno Ambience\Night-Winds_Looping.mp3", 1, 1000),
-            (r"Music\Techno Ambience\Urban-Jungle-2061_Looping.mp3", 1, 1000),
-        ],
-    },
+    "*": {"loop": True,  "name": "Radio Tuning",       "directory": r"Music\Radio Tuning"},
+    "1": {"loop": False, "name": "Set Open",            "directory": r"Music\Set Open"},
+    "2": {"loop": True,  "name": "Orchestral",          "directory": r"Music\Orchestral"},
+    "3": {"loop": True,  "name": "Industrial Ambience", "directory": r"Music\Industrial Ambience"},
+    "4": {"loop": True,  "name": "Peaceful",            "directory": r"Music\Peaceful"},
+    "5": {"loop": True,  "name": "Choral",              "directory": r"Music\Choral"},
+    "6": {"loop": True,  "name": "Action",              "directory": r"Music\Action"},
+    "7": {"loop": True,  "name": "Space Ambience",      "directory": r"Music\Space Ambience"},
+    "8": {"loop": True,  "name": "Suspense",            "directory": r"Music\Suspense"},
+    "9": {"loop": True,  "name": "Techno Ambience",     "directory": r"Music\Techno Ambience"},
 }
 
 LAST_SONG = {key: None for key in KEY_BINDINGS}
@@ -108,28 +38,53 @@ VOLUME_STEP = 0.1      # how much + / - changes volume
 
 # ------------------------ #
 
+def load_dir_config(directory):
+    config = configparser.ConfigParser()
+    config_path = os.path.join(directory, "config.ini")
+    if os.path.isfile(config_path):
+        config.read(config_path)
+    return config
+
+def get_tracks_from_directory(directory, dir_config):
+    defaults = dir_config.defaults()
+    default_volume = float(defaults.get("volume", DEFAULT_VOLUME))
+    default_fade = int(defaults.get("fade_in_ms", DEFAULT_FADE_MS))
+
+    tracks = []
+    try:
+        filenames = os.listdir(directory)
+    except FileNotFoundError:
+        return tracks
+
+    for filename in filenames:
+        if not filename.lower().endswith(SUPPORTED_EXTENSIONS):
+            continue
+        path = os.path.join(directory, filename)
+        if not os.path.isfile(path):
+            continue
+        if dir_config.has_section(filename):
+            volume = dir_config.getfloat(filename, "volume", fallback=default_volume)
+            fade = dir_config.getint(filename, "fade_in_ms", fallback=default_fade)
+        else:
+            volume = default_volume
+            fade = default_fade
+        tracks.append((path, volume, fade))
+
+    return tracks
+
 def play_random_song(binding, key_id):
-    tracks = binding["tracks"]
+    directory = binding["directory"]
     loop = binding["loop"]
     last_song = LAST_SONG[key_id]
 
-    # Only exclude the last song
-    valid_tracks = [
-        (path, volume, fade)
-        for path, volume, fade in tracks
-        if os.path.isfile(path)
-        and path.lower().endswith(SUPPORTED_EXTENSIONS)
-        and path != last_song
-    ]
+    dir_config = load_dir_config(directory)
+    tracks = get_tracks_from_directory(directory, dir_config)
 
-
+    # Prefer a track that wasn't the last one played
+    valid_tracks = [(p, v, f) for p, v, f in tracks if p != last_song]
     if not valid_tracks:
-        # If the only valid track is the last one, just play it
-        valid_tracks = [
-            (path, volume, fade)
-            for path, volume, fade in tracks
-            if os.path.isfile(path) and path.lower().endswith(SUPPORTED_EXTENSIONS)
-        ]
+        # Only one track available, just replay it
+        valid_tracks = tracks
 
     if not valid_tracks:
         print(f"No valid audio files found for key '{key_id}'")
