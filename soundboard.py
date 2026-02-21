@@ -147,7 +147,7 @@ keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,))
 
 print("Music hotkeys:")
 for key, binding in KEY_BINDINGS.items():
-    print(f"  {key} → {binding["name"]}")
+    print(f"  {key} → {binding['name']}")
 
 print(f"\n{STOP_KEY} → stop song")
 print(f"{QUIT_KEY} → quit")
