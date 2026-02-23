@@ -3,6 +3,20 @@ import pygame
 import keyboard
 import os
 import configparser
+import zipfile
+
+# -------- UNPACK MUSIC ZIP -------- #
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_zip_path = os.path.join(_script_dir, "music.zip")
+_music_dir = os.path.join(_script_dir, "Music")
+
+if os.path.isfile(_zip_path) and not os.path.isdir(_music_dir):
+    print("Music folder not found — unpacking music.zip...")
+    with zipfile.ZipFile(_zip_path, "r") as _zf:
+        _zf.extractall(_script_dir)
+    print("Music unpacked.")
+
+# ---------------------------------- #
 
 pygame.mixer.init()
 
