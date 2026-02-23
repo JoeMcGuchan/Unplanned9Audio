@@ -7,6 +7,8 @@ import zipfile
 import sys
 import argparse
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 # -------- UNPACK MUSIC ZIP -------- #
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 _music_dir = os.path.join(_script_dir, "Music")
