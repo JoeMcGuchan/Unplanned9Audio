@@ -4,14 +4,22 @@ import keyboard
 import os
 import configparser
 import zipfile
+import sys
+import argparse
 
 # -------- UNPACK MUSIC ZIP -------- #
 _script_dir = os.path.dirname(os.path.abspath(__file__))
-_zip_path = os.path.join(_script_dir, "music.zip")
 _music_dir = os.path.join(_script_dir, "Music")
 
+_parser = argparse.ArgumentParser(description="Music soundboard")
+_parser.add_argument("zip_file", nargs="?", default=os.path.join(_script_dir, "music.zip"),
+                     help="Path to music zip file (default: music.zip)")
+_args = _parser.parse_args()
+
+_zip_path = _args.zip_file
+
 if os.path.isfile(_zip_path) and not os.path.isdir(_music_dir):
-    print("Music folder not found — unpacking music.zip...")
+    print(f"Music folder not found — unpacking {_zip_path}...")
     with zipfile.ZipFile(_zip_path, "r") as _zf:
         _zf.extractall(_script_dir)
     print("Music unpacked.")
