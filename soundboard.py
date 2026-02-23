@@ -37,22 +37,28 @@ DEFAULT_FADE_MS = 1000
 
 # -------- CONFIG -------- #
 
-# loop: whether or not the music should loop on finishing
-# directory: path to the folder containing tracks for this key
+# Maps hotkey -> Music subdirectory. name and loop are read from each directory's config.ini.
 KEY_BINDINGS = {
-    "*": {"loop": True,  "name": "Radio Tuning",       "directory": r"Music\Radio Tuning"},
-    "1": {"loop": False, "name": "Set Open",            "directory": r"Music\Set Open"},
-    "2": {"loop": True,  "name": "Orchestral",          "directory": r"Music\Orchestral"},
-    "3": {"loop": True,  "name": "Industrial Ambience", "directory": r"Music\Industrial Ambience"},
-    "4": {"loop": True,  "name": "Peaceful",            "directory": r"Music\Peaceful"},
-    "5": {"loop": True,  "name": "Choral",              "directory": r"Music\Choral"},
-    "6": {"loop": True,  "name": "Action",              "directory": r"Music\Action"},
-    "7": {"loop": True,  "name": "Space Ambience",      "directory": r"Music\Space Ambience"},
-    "8": {"loop": True,  "name": "Suspense",            "directory": r"Music\Suspense"},
-    "9": {"loop": True,  "name": "Techno Ambience",     "directory": r"Music\Techno Ambience"},
+    "*": r"Music\Radio Tuning",
+    "1": r"Music\Set Open",
+    "2": r"Music\Orchestral",
+    "3": r"Music\Industrial Ambience",
+    "4": r"Music\Peaceful",
+    "5": r"Music\Choral",
+    "6": r"Music\Action",
+    "7": r"Music\Space Ambience",
+    "8": r"Music\Suspense",
+    "9": r"Music\Techno Ambience",
 }
 
 LAST_SONG = {key: None for key in KEY_BINDINGS}
+
+def get_binding_meta(directory):
+    dir_config = load_dir_config(directory)
+    defaults = dir_config.defaults()
+    name = defaults.get("name", os.path.basename(directory))
+    loop = defaults.get("loop", "true").strip().lower() in ("true", "1", "yes")
+    return name, loop
 
 STOP_KEY = "0"
 QUIT_KEY = "esc"
@@ -96,12 +102,11 @@ def get_tracks_from_directory(directory, dir_config):
 
     return tracks
 
-def play_random_song(binding, key_id):
-    directory = binding["directory"]
-    loop = binding["loop"]
+def play_random_song(directory, key_id):
     last_song = LAST_SONG[key_id]
 
     dir_config = load_dir_config(directory)
+    _, loop = get_binding_meta(directory)
     tracks = get_tracks_from_directory(directory, dir_config)
 
     # Prefer a track that wasn't the last one played
@@ -162,16 +167,17 @@ def change_volume(delta):
     print(f"🔊 Volume set to {round(CURRENT_VOLUME, 2)}")
 
 # Bind keys dynamically
-for key, files in KEY_BINDINGS.items():
-    keyboard.add_hotkey(key, play_random_song, args=(files, key))
+for key, directory in KEY_BINDINGS.items():
+    keyboard.add_hotkey(key, play_random_song, args=(directory, key))
 
 keyboard.add_hotkey(STOP_KEY, stop_song)
 keyboard.add_hotkey("+", change_volume, args=(VOLUME_STEP,))
 keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,))
 
 print("Music hotkeys:")
-for key, binding in KEY_BINDINGS.items():
-    print(f"  {key} → {binding['name']}")
+for key, directory in KEY_BINDINGS.items():
+    name, _ = get_binding_meta(directory)
+    print(f"  {key} → {name}")
 
 print(f"\n{STOP_KEY} → stop song")
 print(f"{QUIT_KEY} → quit")
