@@ -35,31 +35,6 @@ SUPPORTED_EXTENSIONS = (".mp3", ".wav", ".ogg", ".flac")
 DEFAULT_VOLUME = 1.0
 DEFAULT_FADE_MS = 1000
 
-# -------- CONFIG -------- #
-
-# Maps hotkey -> Music subdirectory. name and loop are read from each directory's config.ini.
-KEY_BINDINGS = {
-    "*": r"Music\Radio Tuning",
-    "1": r"Music\Set Open",
-    "2": r"Music\Orchestral",
-    "3": r"Music\Industrial Ambience",
-    "4": r"Music\Peaceful",
-    "5": r"Music\Choral",
-    "6": r"Music\Action",
-    "7": r"Music\Space Ambience",
-    "8": r"Music\Suspense",
-    "9": r"Music\Techno Ambience",
-}
-
-PLAYED_TRACKS = {key: set() for key in KEY_BINDINGS}
-
-def get_binding_meta(directory):
-    dir_config = load_dir_config(directory)
-    defaults = dir_config.defaults()
-    name = defaults.get("name", os.path.basename(directory))
-    loop = defaults.get("loop", "true").strip().lower() in ("true", "1", "yes")
-    return name, loop
-
 STOP_KEY = "0"
 QUIT_KEY = "esc"
 
@@ -74,6 +49,33 @@ def load_dir_config(directory):
     if os.path.isfile(config_path):
         config.read(config_path)
     return config
+
+def discover_bindings(music_dir):
+    """Scan music_dir and return {key: directory} for subdirs with key= in their config.ini."""
+    bindings = {}
+    try:
+        entries = os.listdir(music_dir)
+    except FileNotFoundError:
+        return bindings
+    for entry in entries:
+        path = os.path.join(music_dir, entry)
+        if not os.path.isdir(path):
+            continue
+        cfg = load_dir_config(path)
+        key = cfg.defaults().get("key", "").strip()
+        if key:
+            bindings[key] = path
+    return bindings
+
+KEY_BINDINGS = discover_bindings(_music_dir)
+PLAYED_TRACKS = {key: set() for key in KEY_BINDINGS}
+
+def get_binding_meta(directory):
+    dir_config = load_dir_config(directory)
+    defaults = dir_config.defaults()
+    name = defaults.get("name", os.path.basename(directory))
+    loop = defaults.get("loop", "true").strip().lower() in ("true", "1", "yes")
+    return name, loop
 
 def get_tracks_from_directory(directory, dir_config):
     defaults = dir_config.defaults()
