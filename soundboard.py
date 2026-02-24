@@ -51,7 +51,7 @@ KEY_BINDINGS = {
     "9": r"Music\Techno Ambience",
 }
 
-LAST_SONG = {key: None for key in KEY_BINDINGS}
+PLAYED_TRACKS = {key: set() for key in KEY_BINDINGS}
 
 def get_binding_meta(directory):
     dir_config = load_dir_config(directory)
@@ -103,24 +103,23 @@ def get_tracks_from_directory(directory, dir_config):
     return tracks
 
 def play_random_song(directory, key_id):
-    last_song = LAST_SONG[key_id]
-
     dir_config = load_dir_config(directory)
     _, loop = get_binding_meta(directory)
     tracks = get_tracks_from_directory(directory, dir_config)
 
-    # Prefer a track that wasn't the last one played
-    valid_tracks = [(p, v, f) for p, v, f in tracks if p != last_song]
-    if not valid_tracks:
-        # Only one track available, just replay it
-        valid_tracks = tracks
-
-    if not valid_tracks:
+    if not tracks:
         print(f"No valid audio files found for key '{key_id}'")
         return
 
-    song_path, volume, fade_in_ms = random.choice(valid_tracks)
-    LAST_SONG[key_id] = song_path
+    # Pick from tracks not yet played this cycle
+    unplayed = [(p, v, f) for p, v, f in tracks if p not in PLAYED_TRACKS[key_id]]
+    if not unplayed:
+        # All tracks played — reset and start a new cycle
+        PLAYED_TRACKS[key_id] = set()
+        unplayed = tracks
+
+    song_path, volume, fade_in_ms = random.choice(unplayed)
+    PLAYED_TRACKS[key_id].add(song_path)
 
     try:
         pygame.mixer.music.load(song_path)
