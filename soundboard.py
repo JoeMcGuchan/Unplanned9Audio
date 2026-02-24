@@ -167,11 +167,11 @@ def change_volume(delta):
 
 # Bind keys dynamically
 for key, directory in KEY_BINDINGS.items():
-    keyboard.add_hotkey(key, play_random_song, args=(directory, key))
+    keyboard.add_hotkey(key, play_random_song, args=(directory, key), suppress=True)
 
-keyboard.add_hotkey(STOP_KEY, stop_song)
-keyboard.add_hotkey("+", change_volume, args=(VOLUME_STEP,))
-keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,))
+keyboard.add_hotkey(STOP_KEY, stop_song, suppress=True)
+keyboard.add_hotkey("+", change_volume, args=(VOLUME_STEP,), suppress=True)
+keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,), suppress=True)
 
 print("Music hotkeys:")
 for key, directory in KEY_BINDINGS.items():
