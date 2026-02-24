@@ -95,6 +95,8 @@ def get_tracks_from_directory(directory, dir_config):
         if not os.path.isfile(path):
             continue
         if dir_config.has_section(filename):
+            if dir_config.getboolean(filename, "suppress", fallback=False):
+                continue
             volume = dir_config.getfloat(filename, "volume", fallback=default_volume)
             fade = dir_config.getint(filename, "fade_in_ms", fallback=default_fade)
         else:
