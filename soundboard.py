@@ -178,7 +178,7 @@ keyboard.add_hotkey("+", change_volume, args=(VOLUME_STEP,), suppress=True)
 keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,), suppress=True)
 
 print("Music hotkeys:")
-for key, directory in KEY_BINDINGS.items():
+for key, directory in sorted(KEY_BINDINGS.items()):
     name, _ = get_binding_meta(directory)
     print(f"  {key} → {name}")
 
