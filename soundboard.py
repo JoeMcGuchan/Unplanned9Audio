@@ -6,6 +6,8 @@ import configparser
 import zipfile
 import sys
 import argparse
+import tkinter as tk
+from tkinter import ttk, font as tkfont
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -112,7 +114,7 @@ def play_random_song(directory, key_id):
     tracks = get_tracks_from_directory(directory, dir_config)
 
     if not tracks:
-        print(f"No valid audio files found for key '{key_id}'")
+        ui.set_status(f"No audio files found for key '{key_id}'")
         return
 
     # Pick from tracks not yet played this cycle
@@ -135,55 +137,157 @@ def play_random_song(directory, key_id):
         loops = -1 if loop else 0
         pygame.mixer.music.play(loops=loops, fade_ms=fade_in_ms)
 
-        loop_status = "looping" if loop else "one-shot"
+        name, _ = get_binding_meta(directory)
+        loop_label = "looping" if loop else "one-shot"
         fade_status = f"fade-in {fade_in_ms}ms" if fade_in_ms > 0 else "no fade"
-
-        print(
-            f"▶ Playing: {os.path.basename(song_path)} "
-            f"({loop_status}, vol={volume}, {fade_status})"
-        )
+        ui.set_status(f"Playing: {os.path.basename(song_path)}", f"{name}  \u00b7  {loop_label}")
+        ui.set_volume(CURRENT_VOLUME)
+        print(f"▶ Playing: {os.path.basename(song_path)} ({loop_label}, vol={volume}, {fade_status})")
 
     except Exception as e:
+        ui.set_status(f"Error: {e}")
         print(f"Error playing {song_path}: {e}")
 
 def stop_song():
     if pygame.mixer.music.get_busy():
         pygame.mixer.music.stop()
+        ui.set_status("Stopped")
         print("⏹ Song stopped")
     else:
+        ui.set_status("Nothing playing")
         print("No song is currently playing")
 
 def change_volume(delta):
     global CURRENT_VOLUME
 
     if not pygame.mixer.music.get_busy():
-        print("No song playing")
         return
 
     CURRENT_VOLUME += delta
-
-    # Clamp between 0.0 and 1.0
     CURRENT_VOLUME = max(0.0, min(1.0, CURRENT_VOLUME))
-
     pygame.mixer.music.set_volume(CURRENT_VOLUME)
+    ui.set_volume(CURRENT_VOLUME)
+    print(f"Volume set to {round(CURRENT_VOLUME, 2)}")
 
-    print(f"🔊 Volume set to {round(CURRENT_VOLUME, 2)}")
+def quit_app():
+    pygame.mixer.music.stop()
+    ui.quit()
 
-# Bind keys dynamically
+# ------------------------ #
+
+class SoundboardUI:
+    BG      = "#111111"
+    FG      = "#ffffff"
+    FG_DIM  = "#aaaaaa"
+    FG_KEY  = "#60a5fa"  # blue for key numbers
+    FG_NOW  = "#4ade80"  # green for now-playing status
+
+    def __init__(self, root, bindings):
+        self.root = root
+        root.title("Soundboard")
+        root.attributes("-topmost", True)
+        root.configure(bg=self.BG, padx=48, pady=28)
+        root.protocol("WM_DELETE_WINDOW", quit_app)
+        root.state("zoomed")  # start maximized
+
+        # --- Hotkeys section (two-column grid) ---
+        tk.Label(root, text="HOTKEYS", font=("Segoe UI", 12, "bold"),
+                 fg=self.FG_DIM, bg=self.BG).pack(anchor="w")
+
+        bindings_frame = tk.Frame(root, bg=self.BG)
+        bindings_frame.pack(anchor="w", pady=(8, 0))
+
+        sorted_bindings = sorted(bindings.items())
+        n_rows = (len(sorted_bindings) + 1) // 2  # split into 2 columns
+        for i, (key, directory) in enumerate(sorted_bindings):
+            col = (i // n_rows) * 3   # each binding occupies 3 grid columns
+            row = i % n_rows
+            name, _ = get_binding_meta(directory)
+            tk.Label(bindings_frame, text=key, font=("Consolas", 36, "bold"),
+                     fg=self.FG_KEY, bg=self.BG, width=3, anchor="w"
+                     ).grid(row=row, column=col,     sticky="w", padx=(0, 4),  pady=3)
+            tk.Label(bindings_frame, text="\u2192", font=("Segoe UI", 28),
+                     fg=self.FG_DIM, bg=self.BG
+                     ).grid(row=row, column=col + 1, sticky="w", padx=(0, 12), pady=3)
+            tk.Label(bindings_frame, text=name, font=("Segoe UI", 32, "bold"),
+                     fg=self.FG, bg=self.BG
+                     ).grid(row=row, column=col + 2, sticky="w", padx=(0, 64), pady=3)
+
+        tk.Frame(root, bg="#333333", height=2).pack(fill="x", pady=18)
+
+        # --- Now playing section ---
+        self._status_font = tkfont.Font(family="Segoe UI", size=32, weight="bold")
+        self._status_line1_full = "Idle"
+        self.status_line1 = tk.StringVar(value="Idle")
+        self.status_line2 = tk.StringVar(value="")
+        self._status_label = tk.Label(root, textvariable=self.status_line1,
+                 font=self._status_font, fg=self.FG_NOW, bg=self.BG,
+                 justify="left", anchor="w")
+        self._status_label.pack(anchor="w", fill="x")
+        self._status_label.bind("<Configure>", self._update_elided_status)
+        tk.Label(root, textvariable=self.status_line2, font=("Segoe UI", 20),
+                 fg=self.FG_DIM, bg=self.BG, justify="left").pack(anchor="w")
+        self.volume_var = tk.StringVar(value="")
+        tk.Label(root, textvariable=self.volume_var, font=("Segoe UI", 18),
+                 fg=self.FG_DIM, bg=self.BG).pack(anchor="w", pady=(6, 0))
+
+        tk.Frame(root, bg="#333333", height=2).pack(fill="x", pady=18)
+
+        # --- Controls section ---
+        tk.Label(root, text="CONTROLS", font=("Segoe UI", 12, "bold"),
+                 fg=self.FG_DIM, bg=self.BG).pack(anchor="w")
+
+        controls_frame = tk.Frame(root, bg=self.BG)
+        controls_frame.pack(anchor="w", pady=(6, 0))
+        for key, label in [("0", "Stop"), ("Esc", "Quit"), ("+  /  \u2212", "Volume")]:
+            row = tk.Frame(controls_frame, bg=self.BG)
+            row.pack(anchor="w", pady=2)
+            tk.Label(row, text=key, font=("Consolas", 18),
+                     fg=self.FG_DIM, bg=self.BG, width=8, anchor="w").pack(side="left")
+            tk.Label(row, text="\u2192", font=("Segoe UI", 18),
+                     fg=self.FG_DIM, bg=self.BG).pack(side="left", padx=(4, 12))
+            tk.Label(row, text=label, font=("Segoe UI", 18),
+                     fg=self.FG_DIM, bg=self.BG).pack(side="left")
+
+    def _update_elided_status(self, event=None):
+        full = self._status_line1_full
+        width = self._status_label.winfo_width()
+        if width <= 1:
+            self.status_line1.set(full)
+            return
+        if self._status_font.measure(full) <= width:
+            self.status_line1.set(full)
+            return
+        text = full
+        while text and self._status_font.measure(text + "...") > width:
+            text = text[:-1]
+        self.status_line1.set(text + "...")
+
+    def set_status(self, line1, line2=""):
+        def _update():
+            self._status_line1_full = line1
+            self._update_elided_status()
+            self.status_line2.set(line2)
+        self.root.after(0, _update)
+
+    def set_volume(self, vol):
+        self.root.after(0, lambda: self.volume_var.set(f"Volume: {round(vol * 100)}%"))
+
+    def quit(self):
+        self.root.after(0, self.root.destroy)
+
+# ------------------------ #
+
+root = tk.Tk()
+ui = SoundboardUI(root, KEY_BINDINGS)
+
 for key, directory in KEY_BINDINGS.items():
     keyboard.add_hotkey(key, play_random_song, args=(directory, key), suppress=True)
 
 keyboard.add_hotkey(STOP_KEY, stop_song, suppress=True)
+keyboard.add_hotkey(QUIT_KEY, quit_app, suppress=True)
 keyboard.add_hotkey("+", change_volume, args=(VOLUME_STEP,), suppress=True)
 keyboard.add_hotkey("-", change_volume, args=(-VOLUME_STEP,), suppress=True)
 
-print("Music hotkeys:")
-for key, directory in sorted(KEY_BINDINGS.items()):
-    name, _ = get_binding_meta(directory)
-    print(f"  {key} → {name}")
-
-print(f"\n{STOP_KEY} → stop song")
-print(f"{QUIT_KEY} → quit")
-
-keyboard.wait(QUIT_KEY)
+root.mainloop()
 pygame.mixer.music.stop()
