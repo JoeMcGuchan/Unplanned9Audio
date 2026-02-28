@@ -4,8 +4,14 @@ A keyboard-driven music soundboard. Each key triggers a random track from a conf
 
 ## Usage
 
+Double-click `run.bat`. On first run it will automatically create a virtual environment and install dependencies. After that it launches the soundboard directly.
+
+> **Note:** `run.bat` requires Python to be installed and on your PATH. The script requires administrator privileges to capture global hotkeys — if hotkeys aren't responding, right-click `run.bat` and choose "Run as administrator".
+
+An optional zip file containing your Music folder can be passed as an argument:
+
 ```
-python soundboard.py [path/to/music.zip]
+run.bat path\to\music.zip
 ```
 
 If the `Music` folder doesn't exist and a zip file is present (default: `music.zip` next to the script), it will be unpacked automatically.
